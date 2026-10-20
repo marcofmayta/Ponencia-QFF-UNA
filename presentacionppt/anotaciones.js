@@ -1,0 +1,30 @@
+(()=>{'use strict';
+const stage=document.querySelector('#stage'),canvas=document.querySelector('#inkCanvas'),textLayer=document.querySelector('#annotTexts'),laser=document.querySelector('#laserDot'),panel=document.querySelector('#annotation-toolbar'),ctx=canvas.getContext('2d');
+const selector=q=>document.querySelector(q);
+const safeLoad=()=>{try{return JSON.parse(localStorage.getItem('qff-mayta-annotations-v3')||'{}')}catch{return {}}};
+let db=safeLoad(),scene='',tool='cursor',current=null,dirty=false,color='#c12a37',width=4;
+const save=()=>{try{localStorage.setItem('qff-mayta-annotations-v3',JSON.stringify(db))}catch{}};
+const data=()=>{if(!db[scene])db[scene]=[];return db[scene]};
+const size=()=>{let b=stage.getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(b.width*d);canvas.height=Math.round(b.height*d);canvas.style.width=b.width+'px';canvas.style.height=b.height+'px';ctx.setTransform(d,0,0,d,0,0);draw()};
+const at=e=>{let r=stage.getBoundingClientRect();return {x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}};
+function draw(){const b=stage.getBoundingClientRect();ctx.clearRect(0,0,b.width,b.height);for(const item of data()){
+if(item.type!=='stroke'||!item.points?.length)continue;ctx.save();ctx.strokeStyle=item.color;ctx.lineWidth=item.size;ctx.globalAlpha=item.highlight?.30:1;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();item.points.forEach((p,i)=>i?ctx.lineTo(p.x*b.width,p.y*b.height):ctx.moveTo(p.x*b.width,p.y*b.height));if(item.points.length===1){const p=item.points[0];ctx.lineTo(p.x*b.width+.01,p.y*b.height+.01)}ctx.stroke();ctx.restore()}}
+function renderTexts(){const b=stage.getBoundingClientRect();textLayer.innerHTML='';for(const item of data()){
+if(item.type!=='text')continue;const input=document.createElement('textarea');input.className='anno-text';input.value=item.text;input.placeholder='Escribir aquí';input.style.left=item.x*100+'%';input.style.top=item.y*100+'%';input.style.color=item.color;input.style.fontSize='clamp(17px,1.7vw,28px)';input.style.pointerEvents=tool==='text'?'auto':'none';input.title='Editar anotación';input.addEventListener('input',()=>{item.text=input.value;save()});input.addEventListener('blur',()=>{if(!item.text.trim()){db[scene]=data().filter(x=>x!==item);save();renderTexts()}});textLayer.appendChild(input)}}
+function activate(next){tool=next;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));canvas.style.pointerEvents=['pen','highlighter','eraser','text'].includes(tool)?'auto':'none';canvas.style.cursor=tool==='eraser'?'cell':tool==='text'?'text':tool==='pen'||tool==='highlighter'?'crosshair':'default';laser.style.display='none';renderTexts()}
+function sync(){let id=selector('#slide')?.dataset.scene||'portada';if(scene!==id){scene=id;current=null;draw();renderTexts()}}
+canvas.addEventListener('pointerdown',e=>{if(!['pen','highlighter','eraser','text'].includes(tool))return;e.preventDefault();let p=at(e);
+if(tool==='text'){data().push({type:'text',x:p.x,y:p.y,text:'',color});renderTexts();save();textLayer.lastElementChild?.focus();return}
+if(tool==='eraser'){let b=stage.getBoundingClientRect(),best=-1,min=Infinity;data().forEach((l,i)=>{if(l.type!=='stroke')return;for(const q of l.points){let ds=Math.hypot((p.x-q.x)*b.width,(p.y-q.y)*b.height);if(ds<min){min=ds;best=i}}});if(best>=0&&min<30)data().splice(best,1);draw();save();return}
+current={type:'stroke',color,size:width*(tool==='highlighter'?3:1),highlight:tool==='highlighter',points:[p]};data().push(current);canvas.setPointerCapture(e.pointerId);draw()});
+canvas.addEventListener('pointermove',e=>{if(!current)return;current.points.push(at(e));draw()});
+const finish=()=>{if(current){current=null;save()}};canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);
+stage.addEventListener('pointermove',e=>{if(tool!=='laser')return;const p=at(e);laser.style.left=p.x*100+'%';laser.style.top=p.y*100+'%';laser.style.display='block'});stage.addEventListener('pointerleave',()=>laser.style.display='none');
+selector('#annotate').addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden)activate(tool)});selector('#annotation-close').addEventListener('click',()=>{panel.hidden=true;activate('cursor')});
+document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.tool)));
+selector('#ink-color').addEventListener('input',e=>{color=e.target.value});selector('#ink-width').addEventListener('input',e=>{width=Number(e.target.value)});
+selector('#ink-undo').addEventListener('click',()=>{data().pop();save();draw();renderTexts()});selector('#ink-clear').addEventListener('click',()=>{if(!data().length)return;if(confirm('¿Limpiar todas las anotaciones de esta escena?')){db[scene]=[];save();draw();renderTexts()}});
+selector('#ink-export').addEventListener('click',()=>{let b=stage.getBoundingClientRect();const tmp=document.createElement('canvas');tmp.width=Math.round(b.width*2);tmp.height=Math.round(b.height*2);const t=tmp.getContext('2d');t.scale(2,2);t.fillStyle='#fff';t.fillRect(0,0,b.width,b.height);t.drawImage(canvas,0,0,b.width,b.height);t.fillStyle='#182f50';t.font='14px Arial';for(const item of data())if(item.type==='text'){t.fillStyle=item.color;t.fillText(item.text,item.x*b.width,item.y*b.height+18)}let a=document.createElement('a');a.download='QFF_anotaciones_'+scene+'.png';a.href=tmp.toDataURL('image/png');a.click()});
+document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select,[contenteditable]'))return;if(e.key.toLowerCase()==='a'&&!e.altKey&&!e.ctrlKey){panel.hidden=!panel.hidden;e.preventDefault()}if(e.key==='Escape'){activate('cursor');laser.style.display='none'}});
+const obs=new MutationObserver(sync);obs.observe(selector('#counter'),{childList:true,subtree:true,characterData:true});window.addEventListener('resize',size);scene=selector('#slide')?.dataset.scene||'portada';activate('cursor');size();
+})();

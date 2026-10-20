@@ -1,0 +1,24 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ffffff"><title>De los bits a los qubits · Qiskit Fall Fest 2026 · UNA Puno</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="branding.css"></head><body>
+<div class="app"><header class="top"><div class="brand"><span class="square">Q</span><span>Qiskit Fall Fest 2026</span><span style="color:#c7d1de">/</span><span class="host">Ingeniería Estadística e Informática · UNA Puno</span><span class="head-speaker">Marco Mayta · QPerú · ICMC–USP · QIntern</span></div><div class="toolbar"><select id="mode" title="Duración"><option value="60">60 min</option><option value="90" selected>90 min</option><option value="todo">Todas las escenas · estudio</option></select><button id="annotate" title="Herramientas de escritura, dibujo y puntero (A)">✎ Anotar</button><button id="menu" title="Índice (M)">Índice</button><button id="fs" title="Pantalla completa (F)">⛶</button></div></header>
+<main class="stage" id="stage"><div class="stage-inner" id="slide"></div><canvas id="inkCanvas" aria-label="Lienzo de anotaciones"></canvas><div id="annotTexts"></div><div id="laserDot"></div></main><footer class="footer"><div class="chapter" id="chapter"></div><span class="presenter-signature">Marco Mayta · QPerú · ICMC–USP · QIntern</span><div class="progress"><div id="progress"></div></div><span class="count" id="counter"></span><button class="nav" id="prev" title="Anterior (←)">←</button><button class="nav next" id="next" title="Siguiente (→)">→</button></footer></div>
+<aside class="annotation-toolbar" id="annotation-toolbar" aria-label="Herramientas de anotación" hidden>
+ <div class="annotation-title">Anotaciones en pantalla <button id="annotation-close" title="Cerrar">×</button></div>
+ <div class="annotation-row">
+ <button data-tool="cursor" class="tool active" title="Interactuar con los controles">Cursor</button>
+ <button data-tool="pen" class="tool" title="Dibujar a mano">Lápiz</button>
+ <button data-tool="highlighter" class="tool" title="Resaltar">Resaltador</button>
+ <button data-tool="eraser" class="tool" title="Borrar trazos">Borrador</button>
+ <button data-tool="text" class="tool" title="Escribir sobre la diapositiva">Texto</button>
+ <button data-tool="laser" class="tool" title="Puntero láser">Láser</button>
+ </div>
+ <div class="annotation-row annotation-controls">
+ <label for="ink-color">Color <input id="ink-color" type="color" value="#c12a37" aria-label="Color de tinta"></label>
+ <label for="ink-width">Trazo <input id="ink-width" type="range" min="2" max="16" value="4" aria-label="Grosor"></label>
+ <button id="ink-undo" title="Deshacer la última anotación">↶ Deshacer</button>
+ <button id="ink-clear" title="Limpiar anotaciones de esta diapositiva">Limpiar</button>
+ <button id="ink-export" title="Exportar las anotaciones en PNG">PNG</button>
+ </div>
+ <small>Las notas de cada escena se conservan en este navegador. Activa Cursor para usar los laboratorios.</small>
+ </aside>
+<div class="overlay" id="overlay"><div class="dialog"><div class="dialog-header"><h2>Contenido de la conferencia</h2><button class="btn tiny" id="close">Cerrar ×</button></div><div class="jump-grid" id="jumps"></div></div></div>
+<script src="data.js"></script><script src="app.js"></script><script src="anotaciones.js"></script><script src="branding.js"></script></body></html>
